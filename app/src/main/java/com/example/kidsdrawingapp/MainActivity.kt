@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package com.example.kidsdrawingapp
 
 import android.Manifest
@@ -5,6 +7,10 @@ import android.app.Activity
 import android.app.Dialog
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import android.os.AsyncTask
 import android.os.Bundle
 import android.provider.MediaStore
 import android.view.View
@@ -16,6 +22,9 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.get
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.dialog_brush_size.*
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.FileOutputStream
 
 class MainActivity : AppCompatActivity() {
 
@@ -48,6 +57,14 @@ class MainActivity : AppCompatActivity() {
 
         ib_undo.setOnClickListener {
             drawing_view.onClickUndo()
+        }
+
+        ib_save.setOnClickListener {
+            if (isReadStorageAllowed()){
+                BitmapAsyncTask(getBitmapFromView(fl_drawing_view_container)).execute()
+            }else{
+                requestStoragePermission()
+            }
         }
     }
 
@@ -171,7 +188,56 @@ class MainActivity : AppCompatActivity() {
         return result == PackageManager.PERMISSION_GRANTED
     }
 
+    private fun getBitmapFromView(view: View): Bitmap {
+        val returnedBitmap = Bitmap.createBitmap(view.width, view.height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(returnedBitmap)
+        val bgDrawable = view.background
+        if (bgDrawable != null) {
+            bgDrawable.draw(canvas)
+        } else {
+            canvas.drawColor(Color.WHITE)
+        }
+        view.draw(canvas)
+        return returnedBitmap
+    }
 
+    @Suppress("DEPRECATION")
+    private inner class BitmapAsyncTask(val mBitmap: Bitmap): AsyncTask<Any, Void, String>(){
+        override fun doInBackground(vararg p0: Any?): String {
+            var result = ""
+            if (mBitmap != null){
+                try {
+                    val bytes = ByteArrayOutputStream()
+                    mBitmap.compress(Bitmap.CompressFormat.PNG, 90, bytes)
+
+                    val f = File(externalCacheDir!!.absoluteFile.toString()
+                            + File.separator + "KidDrawingApp_"
+                            + System.currentTimeMillis() / 1000 + ".png")
+
+                    val fos = FileOutputStream(f)
+                    fos.write(bytes.toByteArray())
+                    fos.close()
+
+                    result = f.absolutePath
+
+                }catch (e: Exception){
+                    result = ""
+                    e.printStackTrace()
+                }
+            }
+            return result
+        }
+
+        override fun onPostExecute(result: String?) {
+            super.onPostExecute(result)
+            if (!result!!.isEmpty()){
+                Toast.makeText(this@MainActivity, "File saved Successfully: $result", Toast.LENGTH_SHORT).show()
+            }else{
+                Toast.makeText(this@MainActivity, "Something went wrong while saving the file.", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+    }
     companion object {
         private const val STORAGE_PERMISSION_CODE = 1
         private const val GALLERY = 2
