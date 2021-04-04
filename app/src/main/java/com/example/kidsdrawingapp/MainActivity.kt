@@ -61,9 +61,9 @@ class MainActivity : AppCompatActivity() {
         }
 
         ib_save.setOnClickListener {
-            if (isReadStorageAllowed()){
+            if (isReadStorageAllowed()) {
                 BitmapAsyncTask(getBitmapFromView(fl_drawing_view_container)).execute()
-            }else{
+            } else {
                 requestStoragePermission()
             }
         }
@@ -203,7 +203,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     @Suppress("DEPRECATION")
-    private inner class BitmapAsyncTask(val mBitmap: Bitmap): AsyncTask<Any, Void, String>(){
+    private inner class BitmapAsyncTask(val mBitmap: Bitmap) : AsyncTask<Any, Void, String>() {
 
         private lateinit var mProgressDialog: Dialog
 
@@ -214,14 +214,16 @@ class MainActivity : AppCompatActivity() {
 
         override fun doInBackground(vararg p0: Any?): String {
             var result = ""
-            if (mBitmap != null){
+            if (mBitmap != null) {
                 try {
                     val bytes = ByteArrayOutputStream()
                     mBitmap.compress(Bitmap.CompressFormat.PNG, 90, bytes)
 
-                    val f = File(externalCacheDir!!.absoluteFile.toString()
-                            + File.separator + "KidDrawingApp_"
-                            + System.currentTimeMillis() / 1000 + ".png")
+                    val f = File(
+                        externalCacheDir!!.absoluteFile.toString()
+                                + File.separator + "KidDrawingApp_"
+                                + System.currentTimeMillis() / 1000 + ".png"
+                    )
 
                     val fos = FileOutputStream(f)
                     fos.write(bytes.toByteArray())
@@ -229,7 +231,7 @@ class MainActivity : AppCompatActivity() {
 
                     result = f.absolutePath
 
-                }catch (e: Exception){
+                } catch (e: Exception) {
                     result = ""
                     e.printStackTrace()
                 }
@@ -240,13 +242,21 @@ class MainActivity : AppCompatActivity() {
         override fun onPostExecute(result: String?) {
             super.onPostExecute(result)
             cancelProgressDialog()
-            if (!result!!.isEmpty()){
-                Toast.makeText(this@MainActivity, "File saved Successfully: $result", Toast.LENGTH_SHORT).show()
-            }else{
-                Toast.makeText(this@MainActivity, "Something went wrong while saving the file.", Toast.LENGTH_SHORT).show()
+            if (!result!!.isEmpty()) {
+                Toast.makeText(
+                    this@MainActivity,
+                    "File saved Successfully: $result",
+                    Toast.LENGTH_SHORT
+                ).show()
+            } else {
+                Toast.makeText(
+                    this@MainActivity,
+                    "Something went wrong while saving the file.",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
-            MediaScannerConnection.scanFile(this@MainActivity, arrayOf(result), null){
-                path, uri -> val shareIntent = Intent()
+            MediaScannerConnection.scanFile(this@MainActivity, arrayOf(result), null) { path, uri ->
+                val shareIntent = Intent()
                 shareIntent.action = Intent.ACTION_SEND
                 shareIntent.putExtra(Intent.EXTRA_STREAM, uri)
                 shareIntent.type = "image/png"
@@ -254,15 +264,17 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        private fun showProgressDialog(){
+        private fun showProgressDialog() {
             mProgressDialog = Dialog(this@MainActivity)
             mProgressDialog.setContentView(R.layout.dialog_custom_progress)
             mProgressDialog.show()
         }
-        private fun cancelProgressDialog(){
+
+        private fun cancelProgressDialog() {
             mProgressDialog.dismiss()
         }
     }
+
     companion object {
         private const val STORAGE_PERMISSION_CODE = 1
         private const val GALLERY = 2
